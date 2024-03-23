@@ -1,32 +1,59 @@
-import { View, Text,TextInput } from 'react-native'
-import React,{useState}from 'react'
+import { View, TextInput, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { collection, getFirestore, getDocs, orderBy, query, where, startAt, endAt } from 'firebase/firestore';
+import { collection, getFirestore, getDocs, orderBy, where } from 'firebase/firestore';
 import { app } from '../../../firebaseConfig';
 
 export default function SearchBar() {
     const db = getFirestore(app);
-    const [jobItemList, setJobItemList] = useState([]);
+    const [search, setSearch] = useState([]);
 
-    const searchJobItems = async (query) => {
-        setJobItemList([]); // Clear previous job items
-        const q = query.toLowerCase(); // Convert query to lowercase for case-insensitive search
-        const qRef = collection(db, 'UserPost');
-        const searchQuery = query(qRef, 'title', '>=', q).where('title', '<=', q + '\uf8ff');
-        const querySnapshot = await getDocs(searchQuery);
-        const searchData = [];
+    const getSearch = async (text) => {
+        setSearch([]);
+        const querySnapshot = await getDocs(
+            collection(db, 'UserPost'),
+            where('title', '==', text), // Add where clause for search
+            orderBy('createdAt', 'desc')
+        );
         querySnapshot.forEach((doc) => {
-          searchData.push(doc.data());
+          setSearch((search) => [...search, doc.data()]);
         });
-        setJobItemList(searchData);
-      };
-  return (
-    <View>
-      {/* search bar*/}
-    <View style={{ padding: 10, paddingHorizontal: 5, backgroundColor: 'gray', borderRadius: 50, marginTop: 5,flexDirection:'row',alignItems:'center',}}>
-    <Ionicons name="search" size={24} color="white"style={{marginLeft:5}} />
-      <TextInput placeholder='Search' placeholderTextColor='white' style={{ color: 'white',marginLeft:5 }} onChangeText={searchJobItems}/>
-    </View>
-    </View>
-  )
+    };
+
+    return (
+        <View style={styles.container}>
+            <Ionicons name="search" size={24} color="white" style={styles.icon} />
+            <TextInput
+                placeholder='Search'
+                placeholderTextColor='white'
+                style={styles.input}
+                value={search}
+                onChangeText={(text) => getSearch(text)}
+            />
+        </View>
+    )
 }
+
+const styles = StyleSheet.create({
+    container: {
+        padding: 10,
+        paddingHorizontal: 5,
+        backgroundColor: 'gray',
+        borderRadius: 50,
+        marginTop: 5,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    icon: {
+        marginLeft: 5,
+    },
+    input: {
+        color: 'white',
+        marginLeft: 5,
+        flex: 1,
+    },
+});
+
+
+
+

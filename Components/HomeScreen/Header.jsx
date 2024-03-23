@@ -1,5 +1,5 @@
 import { View, Text, Image, TextInput } from 'react-native'
-import React from 'react'
+import React, { useState, useEffect }  from 'react'
 import { useUser } from '@clerk/clerk-expo'
 import { Ionicons } from '@expo/vector-icons';
 import SearchBar from './Search/SearchBar';
@@ -7,6 +7,7 @@ import SearchBar from './Search/SearchBar';
 export default function Header() {
 
     const {user}=useUser()
+ 
   return (
     <View>
         {/*user info section */}
@@ -18,7 +19,7 @@ export default function Header() {
       </View>
     </View>
     {/* search bar*/}
-    <SearchBar/>
+    <SearchBar />
     </View>
   )
 }
