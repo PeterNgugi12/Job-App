@@ -2,6 +2,7 @@ import { View, Text, Image, TextInput } from 'react-native'
 import React from 'react'
 import { useUser } from '@clerk/clerk-expo'
 import { Ionicons } from '@expo/vector-icons';
+import SearchBar from './Search/SearchBar';
 
 export default function Header() {
 
@@ -17,10 +18,7 @@ export default function Header() {
       </View>
     </View>
     {/* search bar*/}
-    <View style={{ padding: 10, paddingHorizontal: 5, backgroundColor: 'gray', borderRadius: 50, marginTop: 5,flexDirection:'row',alignItems:'center',}}>
-    <Ionicons name="search" size={24} color="white"style={{marginLeft:5}} />
-      <TextInput placeholder='Search' placeholderTextColor='white' style={{ color: 'white',marginLeft:5 }} onChangeText={(value)=>console.log(value)}/>
-    </View>
+    <SearchBar/>
     </View>
   )
 }
