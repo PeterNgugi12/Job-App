@@ -19,7 +19,7 @@ export default function App() {
     getJobItemList();
   }, []);
 
-  // Fetch sliders for home screen
+ // Fetch sliders for home screen
   const getSliders = async () => {
     setSliderList([]);
     const querySnapshot = await getDocs(collection(db, 'Sliders'));
