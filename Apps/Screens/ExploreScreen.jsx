@@ -1,35 +1,67 @@
-import { View, Text, ScrollView } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import { collection, getDocs, getFirestore, orderBy, query } from 'firebase/firestore'
-import JobItemList from '../../Components/HomeScreen/JobItemList'
+import React, { useEffect, useState } from 'react';
+import { View, ScrollView, RefreshControl } from 'react-native';
+import { collection, getDocs, getFirestore, orderBy, query, where } from 'firebase/firestore';
+import JobItemList from '../../Components/HomeScreen/JobItemList';
 import { app } from '../../firebaseConfig';
-import JobList from './JobList';
-
+import SearchByLocation from "../../Components/HomeScreen/Search/SearchByLocation";
 
 export default function ExploreScreen() {
+    const db = getFirestore(app);
+    const [hireList, setHireList] = useState([]);
+    const [refreshing, setRefreshing] = useState(false); // State to manage refreshing
 
-  const db=getFirestore(app)
- const[hireList,sethireList]=useState([])
+    useEffect(() => {
+        getAllJobs();
+    }, []);
 
-  useEffect(()=>{
-  getAllJobs()
-  },[])
-  //used to get all jobs
-  const getAllJobs=async()=>{
-    sethireList([])
-    const q=query(collection(db,'UserPost'),orderBy('createdAt','desc'))
+    const fetchData = async () => {
+        setRefreshing(true); // Set refreshing to true when fetching new data
+        await getAllJobs();
+        setRefreshing(false); // Set refreshing to false after data is fetched
+    };
 
-    const snapshot=await getDocs(q)
+    // Function to get all jobs
+    const getAllJobs = async () => {
+        setHireList([]);
+        const q = query(collection(db, 'UserPost'), orderBy('createdAt', 'desc'));
+        const snapshot = await getDocs(q);
+        const jobsData = [];
+        snapshot.forEach((doc) => {
+            jobsData.push(doc.data());
+        });
+        setHireList(jobsData);
+    };
 
-    snapshot.forEach((doc)=>{
-      sethireList(hireList=>[...hireList,doc.data()])
-    })
+    // Function to handle search by title
+    const handleSearchByTitle = async (searchTitle) => {
+        setRefreshing(true); // Set refreshing to true when fetching new data
+        setHireList([]); // Clear the list before fetching new data
+        const q = query(collection(db, 'UserPost'), orderBy('createdAt', 'desc'));
+        const snapshot = await getDocs(q);
+        const jobsData = [];
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            // Check if the title contains the search string
+            if (data.title.toLowerCase().includes(searchTitle.toLowerCase())) {
+                jobsData.push(data);
+            }
+        });
+        setHireList(jobsData);
+        setRefreshing(false); // Set refreshing to false after data is fetched
+    };
 
-  }
-  return (
-    <ScrollView nestedScrollEnabled={true}style={{marginTop:20,padding:12,}}>
-      <Text style={{fontSize:22,fontWeight:'bold'}}>Explore More</Text>
-      <JobItemList jobItemList={hireList}/>
-    </ScrollView>
-  )
+    return (
+        <View style={{ flex: 1 }}>
+            <View style={{ marginTop: 20, padding: 10 }}>
+                <SearchByLocation onSearch={handleSearchByTitle} />
+            </View>
+            <ScrollView
+                nestedScrollEnabled={true}
+                style={{ padding: 12 }}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchData} />}
+            >
+                <JobItemList jobItemList={hireList} />
+            </ScrollView>
+        </View>
+    );
 }
