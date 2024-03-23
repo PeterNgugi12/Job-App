@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native'; // Import RefreshControl
 import Header from '../../Components/HomeScreen/Header';
 import Slider from '../../Components/HomeScreen/Slider';
 import Categories from '../../Components/HomeScreen/Categories';
@@ -12,12 +12,19 @@ export default function App() {
   const [sliderList, setSliderList] = useState([]);
   const [categoryList, setCategoryList] = useState([]);
   const [jobItemList, setJobItemList] = useState([]);
+  const [refreshing, setRefreshing] = useState(false); // State to manage refreshing
 
   useEffect(() => {
-    getSliders();
-    getCategoryList();
-    getJobItemList();
+    fetchData(); // Initial data fetch
   }, []);
+
+  const fetchData = async () => {
+    setRefreshing(true); // Set refreshing to true when fetching new data
+    await getSliders();
+    await getCategoryList();
+    await getJobItemList();
+    setRefreshing(false); // Set refreshing to false after data is fetched
+  };
 
   // Fetch sliders for home screen
   const getSliders = async () => {
@@ -53,7 +60,14 @@ export default function App() {
         <Header />
       </View>
       {/* Content */}
-      <ScrollView nestedScrollEnabled={true} showsVerticalScrollIndicator={false} style={styles.scrollView}>
+      <ScrollView
+        nestedScrollEnabled={true}
+        showsVerticalScrollIndicator={false}
+        style={styles.scrollView}
+        refreshControl={ // Add RefreshControl component
+          <RefreshControl refreshing={refreshing} onRefresh={fetchData} />
+        }
+      >
         <View style={styles.content}>
           {/* Slider */}
           <Slider sliderList={sliderList} />
@@ -63,7 +77,6 @@ export default function App() {
           <JobItemList jobItemList={jobItemList} />
         </View>
       </ScrollView>
-
     </View>
   );
 }
