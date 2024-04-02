@@ -11,8 +11,8 @@ import { useUser } from '@clerk/clerk-expo';
 import * as Location from 'expo-location';
 import * as ImageManipulator from 'expo-image-manipulator';
 
-
 export default function AddPostScreen() {
+  const [profileImage, setProfileImage] = useState(null);
   const [images, setImages] = useState([]);
   const db = getFirestore(app);
   const storage = getStorage();
@@ -55,37 +55,85 @@ export default function AddPostScreen() {
     })
   }
 
+  const pickProfileImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
+    });
+  
+    console.log("Profile Image Picker Result:", result);
+  
+    if (!result.cancelled) {
+      // If only one image is selected, directly set it as the profile image
+      if (Array.isArray(result.assets) && result.assets.length === 1) {
+        setProfileImage(result.assets[0].uri);
+      } else {
+        // If multiple images are selected, take the first one as the profile image
+        setProfileImage(result.uri);
+      }
+    } else {
+      console.log("Profile image picking operation canceled.");
+    }
+  };
+  
+  
+
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: true,
       quality: 1,
     });
-
+  
     console.log("Image Picker Result:", result);
-
+  
     if (!result.cancelled) {
       const selectedImages = result.assets.map(asset => asset.uri);
-      const remainingImages = selectedImages.slice(1); // Exclude the first image
-      setImages(prevImages => [...remainingImages, ...prevImages]);
+      if (selectedImages.length === 1) {
+        // If only one image is selected, directly set it as the images state
+        setImages(selectedImages);
+      } else {
+        // If multiple images are selected, exclude the first image (profile image) and add the rest to the state
+        const remainingImages = selectedImages.slice(1);
+        setImages(prevImages => [...remainingImages, ...prevImages]);
+      }
     } else {
       console.log("Image picking operation canceled.");
     }
   };
+  
 
   const onSubmitMethod = async (values, { resetForm }) => {
     setLoading(true);
     values.images = images;
     console.log(values);
-
+    navigation.navigate('view-profile', { profileImageURI: profileImage }) 
+  
     try {
+      // Upload profile image if available
+let profileImageUrl = '';
+if (profileImage) {
+  try {
+    const response = await fetch(profileImage);
+    const blob = await response.blob();
+    const profileImageRef = ref(storage, `profileImages/${user.uid}`);
+    await uploadBytes(profileImageRef, blob);
+    profileImageUrl = await getDownloadURL(profileImageRef);
+    values.profileImage = profileImageUrl;
+  } catch (error) {
+    console.error('Error uploading profile image:', error);
+  }
+}
+
+  
+      // Upload other images
       const blobs = await Promise.all(
         images.map(async (imageUri) => {
           const resp = await fetch(imageUri);
           return await resp.blob();
         })
       );
-
+  
       const downloadUrls = await Promise.all(
         blobs.map(async (blob, index) => {
           const storageRef = ref(storage, `jobPost/${Date.now()}_${index}.jpg`);
@@ -93,19 +141,21 @@ export default function AddPostScreen() {
           return getDownloadURL(storageRef);
         })
       );
-
+  
       console.log("Download URLs:", downloadUrls);
       values.images = downloadUrls;
       values.userName = user?.fullName || '';
       values.userEmail = user?.primaryEmailAddress?.emailAddress || '';
       values.userImage = user?.imageUrl || '';
-
+      values.profileImage = profileImageUrl;
+  
       const docRef = await addDoc(collection(db, 'UserPost'), values);
       if (docRef.id) {
         setLoading(false)
         console.log('Document Added!!')
         Alert.alert('Success!!!', 'Post Added Successful.')
         resetForm(); // Reset the form after successful submission
+        setProfileImage(null); // Clear the profile image
         setImages([]); // Clear the selected images
         setInitialRegion(null); // Clear the initial region
         setPhoneNumber(''); // Clear the phone number
@@ -119,6 +169,8 @@ export default function AddPostScreen() {
     const { selectedLocation, ...otherValues } = values;
     otherValues.location = selectedLocation;
   };
+  
+  
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }}>
@@ -127,7 +179,7 @@ export default function AddPostScreen() {
         <Text className="text-[17px] text-gray-500 mb-7">Create New Post and Start Earning.</Text>
         <ScrollView showsVerticalScrollIndicator={false} className='p-10 flex-1'>
           <Formik
-            initialValues={{ title: '', desc: '', category: '', address: '', price: '', images: [], userName: '', userEmail: '', userImage: '', phoneNumber: '', createdAt: Date.now() }}
+            initialValues={{ title: '', desc: '', category: '', address: '', price: '', images: [],profileImage: '', userName: '', userEmail: '', userImage: '', phoneNumber: '', createdAt: Date.now() }}
             onSubmit={(values, actions) => onSubmitMethod(values, actions)}
             validate={(values) => {
               const errors = {}
@@ -142,12 +194,26 @@ export default function AddPostScreen() {
           >
             {({ handleChange, handleBlur, handleSubmit, values, setFieldValue, errors }) => (
               <>
-                {Array.isArray(images) && images.length > 0 && images.map((image, index) => (
-                  <Image key={index} source={{ uri: image }} style={{ width: 100, height: 100, borderRadius: 15, marginBottom: 10, flexDirection: 'row' }} />
-                ))}
-                <TouchableOpacity onPress={pickImage} style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Image source={require('./../../assets/images/placeholde.jpg')} style={{ width: 100, height: 100, borderRadius: 15 }} />
-                  <Text style={{ padding: 5 }}>Add Images</Text>
+               <TouchableOpacity onPress={pickProfileImage} style={styles.imagePickerContainer}>
+                  {profileImage && (
+                    <Image source={{ uri: profileImage }} style={styles.profileImage} />
+                  )}
+                  {!profileImage && (
+                    <Image source={require('./../../assets/images/placeholde.jpg')} style={styles.profileImage} />
+                  )}
+                  <Text style={styles.imagePickerText}>Add Profile Image</Text>
+                </TouchableOpacity>
+
+                {Array.isArray(images) && images.length > 0 && (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} >
+                    {images.map((image, index) => (
+                      <Image key={index} source={{ uri: image }} style={styles.image} />
+                    ))}
+                  </ScrollView>
+                )}
+                <TouchableOpacity onPress={pickImage} style={styles.imagePickerContainer}>
+                  <Image source={require('./../../assets/images/placeholde.jpg')} style={styles.image} />
+                  <Text style={styles.imagePickerText}>Add Images</Text>
                 </TouchableOpacity>
                 <TextInput
                   style={styles.input} placeholder='Title' value={values?.title} onChangeText={handleChange('title')} />
@@ -161,9 +227,8 @@ export default function AddPostScreen() {
                   value={values?.address}
                   onChangeText={handleChange('address')}
                 />
-                <View style={{ borderWidth: 1, borderRadius: 10, marginTop: 15 }}>
+                <View style={styles.pickerContainer}>
                   <Picker selectedValue={values?.category} onValueChange={itemValue => setFieldValue('category', itemValue)}>
-                    {console.log("Category List:", categoryList)}
                     {categoryList && categoryList.length > 0 && categoryList.map((item, index) => (
                       <Picker.Item key={index} label={item?.name} value={item?.name} />
                     ))}
@@ -177,7 +242,7 @@ export default function AddPostScreen() {
                   onChangeText={handleChange('phoneNumber')}
                 />
                 <MapView
-                  style={{ flex: 1, height: 300, marginTop: 10 }}
+                  style={styles.map}
                   provider={PROVIDER_GOOGLE}
                   showsUserLocation
                   initialRegion={initialRegion}
@@ -195,11 +260,11 @@ export default function AddPostScreen() {
                     />
                   )}
                 </MapView>
-                <TouchableOpacity style={{ backgroundColor: loading ? '#ccc' : 'blue' }} onPress={handleSubmit} disabled={loading} className='p-5 bg-green-400 rounded-full mt-10'>
+                <TouchableOpacity style={[styles.button, { backgroundColor: loading ? '#ccc' : 'blue' }]} onPress={handleSubmit} disabled={loading}>
                   {loading ?
                     <ActivityIndicator color='#fff' />
                     :
-                    <Text className='text-white text-center text-[16px]'>Submit</Text>
+                    <Text style={styles.buttonText}>Submit</Text>
                   }
                 </TouchableOpacity>
                 <View style={{ height: 150 }} />
@@ -223,7 +288,53 @@ const styles = StyleSheet.create({
     marginTop: 10,
     textAlignVertical: "top",
     paddingTop: 15
-  }
-})
+  },
+  imagePickerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 15,
+    marginRight: 10,
+  },
+  imagePickerText: {
+    padding: 5,
+    fontSize: 16,
+    color: 'gray',
+  },
+  image: {
+    width: 100,
+    height: 100,
+    borderRadius: 15,
+    marginRight: 10,
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderRadius: 10,
+    marginTop: 15,
+  },
+  map: {
+    flex: 1,
+    height: 300,
+    marginTop: 10,
+  },
+  button: {
+    padding: 15,
+    borderRadius: 10,
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  buttonText: {
+    fontSize: 16,
+    color: 'white',
+  },
+});
+
+
+
+
 
 

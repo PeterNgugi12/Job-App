@@ -14,7 +14,7 @@ export default function PostItem({item}) {
     })} // Handle item press event
   >
     <View>
-      <Image source={{ uri: item.images[0] }} style={{ width: '100%', height: 170, borderRadius: 10 }} />
+      <Image source={{ uri: item.profileImage }} style={{ width: 100, height: 100, borderRadius: 50 ,marginLeft:25,marginTop:10}} />
       <View style={{ padding: 10 }}>
         
         <Text style={{ fontSize: 15, fontWeight: 'bold', marginTop: 2, textAlign:"center"}}>Job:{item.title}</Text>

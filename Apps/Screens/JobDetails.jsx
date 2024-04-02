@@ -120,7 +120,7 @@ const JobDetails = () => {
     return (
         <ScrollView nestedScrollEnabled={true} style={styles.container} showsVerticalScrollIndicator={false}>
             <View>
-                <Image style={styles.title} source={{ uri: params.job?.userImage }} />
+                <Image style={styles.title} source={{ uri: params.job?.profileImage }} />
             </View>
             <View style={{ padding: 10 }}>
                 <Text style={{ fontSize: 20, fontWeight: '400', textAlign: 'center' }}>{params.job?.userName}</Text>
@@ -192,14 +192,16 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     imageContainer: {
-        width: '32%', // Adjust this value according to your preference
+        width: '32%', // Adjust width to fit three images in a row
         aspectRatio: 1, // Maintain aspect ratio
-        marginVertical: 5,
-        borderRadius: 10,
-        overflow: 'hidden',
+        marginBottom: 10, // Add margin bottom to create space between images
+        marginRight: 2, // Adjust this value to control the spacing
+
       },
       image: {
-        flex: 1,
+        width: '100%',
+        height: '100%',
+        borderRadius: 10,
       },
     title: {
         marginTop: 20,
@@ -222,8 +224,9 @@ const styles = StyleSheet.create({
     imageRowContainer: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-start',
         paddingHorizontal: 10,
+        marginBottom: 10, // Add margin bottom to create space between rows
       },
 });
 
