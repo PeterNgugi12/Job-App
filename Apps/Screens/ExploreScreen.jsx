@@ -51,7 +51,7 @@ export default function ExploreScreen() {
     };
 
     return (
-        <View style={{ flex: 1 }}>
+        <ScrollView style={{ flex: 1 }}>
             <View style={{ marginTop: 20, padding: 10 }}>
                 <SearchByLocation onSearch={handleSearchByTitle} />
             </View>
@@ -62,6 +62,6 @@ export default function ExploreScreen() {
             >
                 <JobItemList jobItemList={hireList} />
             </ScrollView>
-        </View>
+        </ScrollView>
     );
 }

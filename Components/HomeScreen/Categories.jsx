@@ -14,7 +14,7 @@ export default function Categories({ categoryList }) {
         renderItem={({ item, index }) =>(
           <TouchableOpacity onPress={()=>navigation.navigate('job-list',{category:item.name})} style={styles.itemContainer}>
             <Image source={{ uri: item.icon }} style={styles.image}/>
-            <Text style={{fontSize:12, marginTop:1}}>{item.name}</Text>
+            <Text style={{fontSize:12, marginTop:1,color:'#0a85ed'}}>{item.name}</Text>
           </TouchableOpacity>
         )}
       />
@@ -40,6 +40,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 17,
     marginBottom: 10,
+    color:"#0a85ed"
   },
   itemContainer: {
     flex: 1,

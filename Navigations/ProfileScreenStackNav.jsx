@@ -10,6 +10,7 @@ import ReportWorkerScreen from '../Apps/Screens/ReportWorkerScreen'
 import FaqScreen from '../Apps/Screens/FaqScreen'
 import TermsScreen from '../Apps/Screens/TermsScreen'
 import ViewProfileScreen from '../Apps/Screens/ViewProfileScreen'
+import EditPostScreen from '../Apps/Screens/EditPostScreen';
 
 const Stack=createStackNavigator()
 
@@ -75,6 +76,14 @@ export default function ProfileScreenStackNav() {
         headerTintColor:'black',
         headerTitle:'Profile'
     }}/>
+    <Stack.Screen name="EditPost" component={EditPostScreen} options={{
+         headerStyle:{
+            backgroundColor:'white'
+        },
+        headerTintColor:'black', 
+        headerTitle:'Post'
+    }}
+     />
   </Stack.Navigator>
   )
 }

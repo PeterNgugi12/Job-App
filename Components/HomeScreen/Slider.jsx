@@ -11,7 +11,7 @@ export default function Slider({sliderList}) {
          renderItem={({item,index})=>(
             <View>
                 <Image source={{uri:item?.image}}
-                    style={{height:200,width:330,marginRight:10,borderRadius:20}}
+                    style={{height:330,width:330,marginRight:10,borderRadius:20}}
                 />
 
             </View>

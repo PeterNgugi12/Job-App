@@ -15,9 +15,9 @@ export default function SearchByLocation({ onSearch }) {
     return (
         <View>
             {/* search bar*/}
-            <View style={{ padding: 10, paddingHorizontal: 5, backgroundColor: 'gray', borderRadius: 50, marginTop: 5, flexDirection: 'row', alignItems: 'center', }}>
+            <View style={{ padding: 10, paddingHorizontal: 5, backgroundColor: '#0a85ed', borderRadius: 50, marginTop: 5, flexDirection: 'row', alignItems: 'center', }}>
                 <Ionicons name="search" size={24} color="white" style={{ marginLeft: 5 }} />
-                <TextInput placeholder='Search by title' placeholderTextColor='white' style={{ color: 'white', marginLeft: 5 }} onChangeText={handleSearch} value={searchText} />
+                <TextInput placeholder='Search by Title & Location' placeholderTextColor='white' style={{ color: 'white', marginLeft: 5 }} onChangeText={handleSearch} value={searchText} />
             </View>
         </View>
     )

@@ -14,9 +14,9 @@ export default function ExploreScreenNav() {
     }}/>
         <Stack.Screen name='job-detail' component={JobDetails}  options={{
          headerStyle:{
-            backgroundColor:'blue'
+            backgroundColor:'white'
         },
-        headerTintColor:'white',
+        headerTintColor:'black',
         headerTitle:'Job Description'
     }}/>
     </Stack.Navigator>

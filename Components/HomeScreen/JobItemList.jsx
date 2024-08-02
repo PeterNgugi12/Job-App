@@ -10,7 +10,7 @@ export default function JobItemList({ jobItemList }) {
 
   return (
     <View style={{ padding: 10, marginTop: 3 }}>
-      <Text style={{ fontWeight: 'bold', fontSize: 20 }}>Hire Me</Text>
+      <Text style={{ fontWeight: 'bold', fontSize: 20,color:'#0a85ed' }}>Hire Me</Text>
       <FlatList
         data={jobItemList}
         numColumns={2}
@@ -20,4 +20,7 @@ export default function JobItemList({ jobItemList }) {
     </View>
   );
 }
+
+
+
 

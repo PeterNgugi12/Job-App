@@ -1,9 +1,10 @@
-import { View, Text, ActivityIndicator } from 'react-native'
+import { View, Text, ActivityIndicator,ScrollView } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { useRoute } from '@react-navigation/native'
 import { getFirestore, query,collection,where,getDocs } from 'firebase/firestore'
 import JobItemList from '../../Components/HomeScreen/JobItemList'
 import {app} from '../../firebaseConfig'
+
 
 export default function JobList() {
     const {params}=useRoute()
@@ -29,9 +30,9 @@ export default function JobList() {
 
     }
   return (
-    <View>
+    <ScrollView>
         {loading ? (
-            <ActivityIndicator size={'large'} color={'blue'} />
+            <ActivityIndicator size={'large'} color={'#0a85ed'} />
         ) : (
             <>
                 {jobList.length > 0 ? (
@@ -41,6 +42,7 @@ export default function JobList() {
                 )}
             </>
         )}
-    </View>
+        <View style={{height:50}}/>
+    </ScrollView>
 )
  }

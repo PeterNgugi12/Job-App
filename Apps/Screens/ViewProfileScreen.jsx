@@ -5,6 +5,7 @@ const ViewProfileScreen = () => {
   return (
     <View>
       <Text>ViewProfileScreen</Text>
+      
     </View>
   )
 }

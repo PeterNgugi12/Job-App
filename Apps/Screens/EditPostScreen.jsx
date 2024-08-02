@@ -62,7 +62,7 @@ export default function EditPostScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-        <Text>Job Title</Text>
+      <Text>Job Title</Text>
       <TextInput
         style={styles.input}
         placeholder="Title"
@@ -76,7 +76,7 @@ export default function EditPostScreen() {
         value={postData.desc}
         onChangeText={(text) => setPostData({ ...postData, desc: text })}
       />
-      <Text>phone No</Text>
+      <Text>Phone No</Text>
       <TextInput
         style={styles.input}
         placeholder="Phone Number"
@@ -90,27 +90,31 @@ export default function EditPostScreen() {
         ))}
         <Button title="Add Images" onPress={handleAddImages} />
       </View>
-      <View style={styles.locationContainer}>
-        <Text style={styles.label}>Selected Location:</Text>
-        <MapView
-          style={styles.map}
-          provider={PROVIDER_GOOGLE}
-          initialRegion={{
-            latitude: postData.selectedLocation.latitude,
-            longitude: postData.selectedLocation.longitude,
-            latitudeDelta: 0.0922,
-            longitudeDelta: 0.0421,
-          }}
-        >
-          <Marker
-            coordinate={{
+      {postData.selectedLocation ? (
+        <View style={styles.locationContainer}>
+          <Text style={styles.label}>Selected Location:</Text>
+          <MapView
+            style={styles.map}
+            provider={PROVIDER_GOOGLE}
+            initialRegion={{
               latitude: postData.selectedLocation.latitude,
               longitude: postData.selectedLocation.longitude,
+              latitudeDelta: 0.0922,
+              longitudeDelta: 0.0421,
             }}
-          />
-        </MapView>
-        <Button title="Update Location" onPress={() => handleUpdateLocation(postData.selectedLocation)} />
-      </View>
+          >
+            <Marker
+              coordinate={{
+                latitude: postData.selectedLocation.latitude,
+                longitude: postData.selectedLocation.longitude,
+              }}
+            />
+          </MapView>
+          <Button title="Update Location" onPress={() => handleUpdateLocation(postData.selectedLocation)} />
+        </View>
+      ) : (
+        <Text style={styles.noLocationText}>Location data is not available for this post</Text>
+      )}
       <Button title="Update Post" onPress={handleUpdatePost} />
     </ScrollView>
   );
@@ -149,5 +153,11 @@ const styles = StyleSheet.create({
     height: 200,
     marginBottom: 10,
   },
+  noLocationText: {
+    textAlign: 'center',
+    color: '#ff0000',
+    marginBottom: 10,
+  },
 });
+
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, ScrollView, ToastAndroid, Alert, ActivityIndicator, KeyboardAvoidingView } from 'react-native';
-import { getFirestore, getDocs, collection, addDoc } from "firebase/firestore"
+import { getFirestore, getDocs, collection, addDoc, doc, getDoc } from "firebase/firestore"
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { app } from '../../firebaseConfig'
 import { Formik } from 'formik';
@@ -10,8 +10,10 @@ import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useUser } from '@clerk/clerk-expo';
 import * as Location from 'expo-location';
 import * as ImageManipulator from 'expo-image-manipulator';
+import { useNavigation } from '@react-navigation/native';
 
 export default function AddPostScreen() {
+  const navigation = useNavigation();
   const [profileImage, setProfileImage] = useState(null);
   const [images, setImages] = useState([]);
   const db = getFirestore(app);
@@ -22,12 +24,31 @@ export default function AddPostScreen() {
   const [countryCode, setCountryCode] = useState('');
   const { user } = useUser()
   const [categoryList, setCategoryList] = useState([])
+  const [counties, setCounties] = useState([]);
+  const [selectedCounty, setSelectedCounty] = useState('');
+  const [selectedSubCounty, setSelectedSubCounty] = useState('');
+  const [subCounties, setSubCounties] = useState([]);
   const formikRef = useRef(null);
 
   useEffect(() => {
     getCategoryList()
     getCurrentLocation();
+    getCounties(); // Call to populate counties
+   // Call to handle county change
+    loadUserPaymentData();
   }, [])
+
+  const loadUserPaymentData = async () => {
+    try {
+      const paymentDoc = await getDoc(doc(db, 'UserPayments', user.id));
+      if (paymentDoc.exists()) {
+        const paymentData = paymentDoc.data();
+        formikRef.current.setFieldValue('expiryDate', paymentData.expiryDate);
+      }
+    } catch (error) {
+      console.error('Error loading user payment data:', error);
+    }
+  };
 
   const getCurrentLocation = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
@@ -45,6 +66,91 @@ export default function AddPostScreen() {
       longitudeDelta: 0.0421,
     });
   }
+
+  const getCounties = async () => {
+    // Kenya Counties
+    const kenyaCounties = [
+      "Baringo", "Bomet", "Bungoma", "Busia", "Elgeyo Marakwet", "Embu", "Garissa", "Homa Bay", "Isiolo", "Kajiado",
+      "Kakamega", "Kericho", "Kiambu", "Kilifi", "Kirinyaga", "Kisii", "Kisumu", "Kitui", "Kwale", "Laikipia",
+      "Lamu", "Machakos", "Makueni", "Mandera", "Marsabit", "Meru", "Migori", "Mombasa", "Murang'a", "Nairobi",
+      "Nakuru", "Nandi", "Narok", "Nyamira", "Nyandarua", "Nyeri", "Samburu", "Siaya", "Taita-Taveta", "Tana River",
+      "Tharaka-Nithi", "Trans Nzoia", "Turkana", "Uasin Gishu", "Vihiga", "Wajir", "West Pokot"
+    ];
+    setCounties(kenyaCounties);
+  };
+
+  const getSubCounties = async (county) => {
+    // Kenya Subcounties
+    const kenyaSubCounties = {
+      "Baringo": ["Baringo Central", "Baringo North", "Baringo South", "Eldama Ravine", "Mogotio", "Tiaty"],
+      "Bomet": ["Bomet Central", "Bomet East", "Chepalungu", "Sotik"],
+      "Bungoma": ["Bumula", "Bungoma Central", "Bungoma East", "Bungoma North", "Bungoma South", "Kimilili", "Mt. Elgon", "Sirisia", "Tongaren", "Webuye East", "Webuye West"],
+      "Busia": ["Bunyala", "Butula", "Matayos", "Nambale", "Samia"],
+      "Elgeyo Marakwet": ["Keiyo North", "Keiyo South", "Marakwet East", "Marakwet West"],
+      "Embu": ["Manyatta", "Mbeere North", "Mbeere South", "Runyenjes"],
+      "Garissa": ["Balambala", "Dadaab", "Fafi", "Garissa Township", "Ijara", "Lagdera"],
+      "Homa Bay": ["Homa Bay Town", "Kabondo Kasipul", "Karachuonyo", "Kasipul", "Ndhiwa", "Rangwe", "Suba"],
+      "Isiolo": ["Isiolo North", "Isiolo South"],
+      "Kajiado": ["Kajiado Central", "Kajiado East", "Kajiado North", "Kajiado West", "Loitokitok", "Namanga"],
+      "Kakamega": ["Butere", "Kakamega Central", "Kakamega East", "Kakamega North", "Kakamega South", "Lugari", "Malava", "Matungu", "Mumias East", "Mumias West"],
+      "Kericho": ["Ainamoi", "Belgut", "Bureti", "Kipkelion East", "Kipkelion West", "Sigowet-Soin"],
+      "Kiambu": ["Gatundu North", "Gatundu South", "Githunguri", "Juja", "Kabete", "Kiambaa", "Kikuyu", "Limuru", "Ruiru", "Thika Town"],
+      "Kilifi": ["Ganze", "Kaloleni", "Kilifi North", "Kilifi South", "Malindi", "Magarini", "Rabai"],
+      "Kirinyaga": ["Gichugu", "Kirinyaga Central", "Kirinyaga East", "Kirinyaga West", "Mwea East", "Mwea West"],
+      "Kisii": ["Bobasi", "Bomachoge Borabu", "Bomachoge Chache", "Kisii Central", "Kisii South", "Kitutu Chache North", "Kitutu Chache South", "Nyamache"],
+      "Kisumu": ["Kisumu Central", "Kisumu East", "Kisumu West", "Muhoroni", "Nyakach", "Nyando", "Seme", "Nyando", "Seme"],
+      "Kitui": ["Kitui Central", "Kitui East", "Kitui Rural", "Kitui South", "Kitui West", "Mwingi Central", "Mwingi East", "Mwingi North"],
+      "Kwale": ["Kinango", "Lunga Lunga", "Matuga", "Msambweni"],
+      "Laikipia": ["Laikipia East", "Laikipia North", "Laikipia West", "Laikipia Central", "Laikipia West"],
+      "Lamu": ["Lamu East", "Lamu West"],
+      "Machakos": ["Athi River", "Kangundo", "Kathiani", "Machakos Town", "Masinga", "Matungulu", "Mavoko", "Mwala", "Yatta"],
+      "Makueni": ["Kaiti", "Kibwezi East", "Kibwezi West", "Kilome", "Makueni", "Mbooni"],
+      "Mandera": ["Banissa", "Lafey", "Mandera East", "Mandera North", "Mandera West", "Mandera South"],
+      "Marsabit": ["Laisamis", "Marsabit Central", "Moyale", "North Horr", "Saku", "Turbi"],
+      "Meru": ["Buuri", "Igembe Central", "Igembe North", "Igembe South", "Imenti Central", "Imenti North", "Imenti South", "Meru Central", "Tigania East", "Tigania West"],
+      "Migori": ["Awendo", "Kuria East", "Kuria West", "Migori East", "Migori West", "Nyatike", "Rongo", "Suna East", "Suna West", "Uriri"],
+      "Mombasa": ["Changamwe", "Jomvu", "Kisauni", "Likoni", "Mvita", "Nyali"],
+      "Murang'a": ["Gatanga", "Gatundu South", "Kahuro", "Kandara", "Kangema", "Kigumo", "Maragua", "Mathioya"],
+      "Nairobi": ["Dagoretti North", "Dagoretti South", "Embakasi Central", "Embakasi East", "Embakasi North", "Embakasi South", "Embakasi West", "Kamukunji", "Kasarani", "Lang'ata", "Makadara", "Mathare", "Nairobi Central", "Roysambu", "Ruaraka", "Starehe", "Westlands"],
+      "Nakuru": ["Bahati", "Gilgil", "Kuresoi North", "Kuresoi South", "Molo", "Naivasha", "Nakuru East", "Nakuru West", "Njoro", "Rongai", "Subukia"],
+      "Nandi": ["Aldai", "Chesumei", "Emgwen", "Mosop", "Nandi Central", "Nandi East", "Nandi North", "Tindiret"],
+      "Narok": ["Emurua Dikirr", "Kilgoris", "Narok East", "Narok North", "Narok South", "Narok West"],
+      "Nyamira": ["Borabu", "Manga", "Masaba North", "Nyamira North", "Nyamira South"],
+      "Nyandarua": ["Kinangop", "Kipipiri", "Ndaragwa", "Ol Kalou"],
+      "Nyeri": ["Kieni East", "Kieni West", "Mathira East", "Mathira West", "Mukurweini", "Nyeri South", "Tetu"],
+      "Samburu": ["Samburu Central", "Samburu East", "Samburu North"],
+      "Siaya": ["Alego Usonga", "Bondo", "Gem", "Rarieda", "Ugenya", "Ugunja"],
+      "Taita-Taveta": ["Mwatate", "Taveta", "Voi"],
+      "Tana River": ["Garsen", "Galole"],
+      "Tharaka-Nithi": ["Chuka", "Igembe South", "Tharaka", "Tigania West"],
+      "Trans Nzoia": ["Cherangany", "Endebess", "Kwanza", "Saboti"],
+      "Turkana": ["Kacheliba", "Kakuma", "Kapenguria", "Katilu", "Kibish", "Lodwar", "Lokichar", "Lokitaung", "Lokori"],
+      "Uasin Gishu": ["Ainabkoi", "Kapseret", "Kesses", "Moiben", "Soy", "Turbo"],
+      "Vihiga": ["Emuhaya", "Hamisi", "Luanda", "Sabatia", "Vihiga"],
+      "Wajir": ["Eldas", "Tarbaj", "Wajir East", "Wajir North", "Wajir South", "Wajir West"],
+      "West Pokot": ["Chepareria", "Kacheliba", "Kapenguria", "Sigor"],
+    };
+    return kenyaSubCounties[county] || [];
+  }
+  const handleCountyChange = async (itemValue, setFieldValue) => {
+    setSelectedCounty(itemValue);
+    setFieldValue('county', itemValue);
+    setSelectedSubCounty('');
+    if (itemValue) {
+      // Populate subcounties based on selected county
+      const subCounties = await getSubCounties(itemValue); // Await for the result
+      if (Array.isArray(subCounties)) {
+        // Only update subCounties if it's an array
+        setSubCounties(subCounties);
+      } else {
+        // If subCounties is not an array, set it to an empty array
+        setSubCounties([]);
+      }
+    } else {
+      // Clear subcounties if no county is selected
+      setSubCounties([]);
+    }
+  };
 
   const getCategoryList = async () => {
     const querySnapshot = await getDocs(collection(db, 'Category'));
@@ -107,7 +213,6 @@ export default function AddPostScreen() {
     setLoading(true);
     values.images = images;
     console.log(values);
-    navigation.navigate('view-profile', { profileImageURI: profileImage }) 
   
     try {
       // Upload profile image if available
@@ -173,18 +278,18 @@ if (profileImage) {
   
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }}>
-      <View className='p-5 flex-1'>
-        <Text className="text-[27px] font-bold">Add New Post</Text>
-        <Text className="text-[17px] text-gray-500 mb-7">Create New Post and Start Earning.</Text>
-        <ScrollView showsVerticalScrollIndicator={false} className='p-10 flex-1'>
+    <KeyboardAvoidingView style={{ flex: 1, }}>
+      <View style={styles.container}>
+        <Text style={styles.title}>Add Your Work Profile</Text>
+        <Text style={styles.subtitle}>Create New Post and Start Earning.</Text>
+        <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
           <Formik
-            initialValues={{ title: '', desc: '', category: '', address: '', price: '', images: [],profileImage: '', userName: '', userEmail: '', userImage: '', phoneNumber: '', createdAt: Date.now() }}
+            initialValues={{ title: '', desc: '', category: '', county: '', subcounty: '',  price: '', images: [],profileImage: '', userName: '', userEmail: '', userImage: '', phoneNumber: '',expiryDate: null, createdAt: Date.now() }}
             onSubmit={(values, actions) => onSubmitMethod(values, actions)}
             validate={(values) => {
               const errors = {}
               if (!values.title) {
-                console.log("Title not Present")
+                console.log("Job Specialization not Present")
                 ToastAndroid.show('Title must be There', ToastAndroid.SHORT)
                 errors.name = "Title Must be there"
               }
@@ -199,139 +304,207 @@ if (profileImage) {
                     <Image source={{ uri: profileImage }} style={styles.profileImage} />
                   )}
                   {!profileImage && (
-                    <Image source={require('./../../assets/images/placeholde.jpg')} style={styles.profileImage} />
+                    <Text style={styles.imagePickerText}>Add Profile Image</Text>
                   )}
-                  <Text style={styles.imagePickerText}>Add Profile Image</Text>
                 </TouchableOpacity>
-
-                {Array.isArray(images) && images.length > 0 && (
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} >
-                    {images.map((image, index) => (
-                      <Image key={index} source={{ uri: image }} style={styles.image} />
-                    ))}
-                  </ScrollView>
-                )}
-                <TouchableOpacity onPress={pickImage} style={styles.imagePickerContainer}>
-                  <Image source={require('./../../assets/images/placeholde.jpg')} style={styles.image} />
-                  <Text style={styles.imagePickerText}>Add Images</Text>
-                </TouchableOpacity>
-                <TextInput
-                  style={styles.input} placeholder='Title' value={values?.title} onChangeText={handleChange('title')} />
-                <TextInput
-                  style={styles.input} placeholder='Description' value={values?.desc} numberOfLines={5} onChangeText={handleChange('desc')} />
-                <TextInput
-                  style={styles.input} placeholder='Price' value={values?.price} keyboardType='number-pad' onChangeText={handleChange('price')} />
+                <Text style={styles.label}>Job Specialization:*</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder='Address'
-                  value={values?.address}
-                  onChangeText={handleChange('address')}
+                  onChangeText={handleChange('title')}
+                  onBlur={handleBlur('title')}
+                  value={values.title}
                 />
-                <View style={styles.pickerContainer}>
-                  <Picker selectedValue={values?.category} onValueChange={itemValue => setFieldValue('category', itemValue)}>
-                    {categoryList && categoryList.length > 0 && categoryList.map((item, index) => (
-                      <Picker.Item key={index} label={item?.name} value={item?.name} />
-                    ))}
-                  </Picker>
-                </View>
+                <Text style={styles.label}>Description:*</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder='Phone Number'
-                  value={values?.phoneNumber}
-                  keyboardType='phone-pad'
-                  onChangeText={handleChange('phoneNumber')}
+                  onChangeText={handleChange('desc')}
+                  onBlur={handleBlur('desc')}
+                  placeholder=""
+                  value={values.desc}
+                  multiline
+                  numberOfLines={4}
                 />
-                <MapView
-                  style={styles.map}
-                  provider={PROVIDER_GOOGLE}
-                  showsUserLocation
-                  initialRegion={initialRegion}
-                  onPress={(event) => {
-                    const { latitude, longitude } = event.nativeEvent.coordinate;
-                    setFieldValue('selectedLocation', { latitude, longitude });
-                  }}
+                 <Text style={styles.label}>Upload your Skill Images:*</Text>
+                 <TouchableOpacity onPress={pickImage} style={[styles.imagePickerContainer, { marginRight: 10,marginTop:5 }]}>
+                    <Text style={styles.imagePickerText}>Add Image</Text>
+                  </TouchableOpacity>
+                <Text style={styles.label}>Category:*</Text>
+                <Picker
+                  style={styles.picker}
+                  selectedValue={values.category}
+                  onValueChange={(itemValue, itemIndex) => setFieldValue('category', itemValue)}
                 >
-                  {values.selectedLocation && (
-                    <Marker
-                      coordinate={{
-                        latitude: values.selectedLocation.latitude,
-                        longitude: values.selectedLocation.longitude,
-                      }}
-                    />
-                  )}
-                </MapView>
-                <TouchableOpacity style={[styles.button, { backgroundColor: loading ? '#ccc' : 'blue' }]} onPress={handleSubmit} disabled={loading}>
-                  {loading ?
-                    <ActivityIndicator color='#fff' />
-                    :
-                    <Text style={styles.buttonText}>Submit</Text>
-                  }
-                </TouchableOpacity>
-                <View style={{ height: 150 }} />
+                  <Picker.Item label="Select Category" value="" />
+                  {categoryList.map((category, index) => (
+                    <Picker.Item key={index} label={category.name} value={category.name} />
+                  ))}
+                </Picker>
+                <Text style={styles.label}>County:*</Text>
+                <Picker
+  style={styles.picker}
+  selectedValue={selectedCounty}
+  onValueChange={(itemValue) => handleCountyChange(itemValue, setFieldValue)} // Pass setFieldValue here
+>
+
+                  <Picker.Item label="Select County" value="" />
+                  {counties.map((county, index) => (
+                    <Picker.Item key={index} label={county} value={county} />
+                  ))}
+                </Picker>
+                <Text style={styles.label}>Sub County:*</Text>
+<Picker
+  style={styles.picker}
+  selectedValue={selectedSubCounty}
+  onValueChange={(itemValue) => {
+    setSelectedSubCounty(itemValue);
+    setFieldValue('subcounty', itemValue);
+  }}
+>
+  <Picker.Item label="Select Sub County" value="" />
+  {subCounties.map((subCounty, index) => (
+    <Picker.Item key={index} label={subCounty} value={subCounty} />
+  ))}
+</Picker>
+                <Text style={styles.label}>Price:*</Text>
+                <TextInput
+                  style={styles.input}
+                  onChangeText={handleChange('price')}
+                  onBlur={handleBlur('price')}
+                  value={values.price}
+                  keyboardType="number-pad"
+                />
+               
+                <Text style={styles.label}>Phone Number:*</Text>
+                <View style={styles.phoneInputContainer}>
+                  <TextInput
+                    style={styles.phoneInput}
+              
+                    onChangeText={handleChange('phoneNumber')}
+                    value={values?.phoneNumber}
+                    keyboardType="phone-pad"
+                    placeholder="Phone Number"
+                  />
+                 
+                </View>
+                
+                <View style={{ flexDirection: 'row', marginTop: 2,justifyContent:'center',}}>
+                 
+                  <TouchableOpacity onPress={handleSubmit} style={styles.submitButton}>
+                    {loading ? (
+                      <ActivityIndicator color="white" />
+                    ) : (
+                      <Text style={styles.submitButtonText}>Submit</Text>
+                      
+                    )}
+
+                  </TouchableOpacity>
+                  
+                </View>
+                
+                
               </>
             )}
           </Formik>
+          <View style={{marginTop:50}}/>
         </ScrollView>
+        
       </View>
+     
     </KeyboardAvoidingView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#fff',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: 'gray',
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 10,
+  },
   input: {
     borderWidth: 1,
-    borderRadius: 10,
-    padding: 10,
-    paddingHorizontal: 17,
-    fontSize: 15,
-    marginBottom: 5,
-    marginTop: 10,
-    textAlignVertical: "top",
-    paddingTop: 15
+    borderColor: '#0a85ed',
+    borderRadius: 5,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    marginTop: 5,
+    marginBottom: 20,
   },
-  imagePickerContainer: {
+  picker: {
+    borderWidth: 1,
+    borderColor: '#0a85ed',
+    borderRadius: 5,
+    marginTop: 5,
+    marginBottom: 20,
+  },
+  phoneInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#0a85ed',
+    borderRadius: 5,
+    marginTop: 5,
+    marginBottom: 20,
+  },
+  phoneInput: {
+    flex: 1,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+  },
+  countryCodePicker: {
+    width: 100,
+    height: '100%',
+  },
+  submitButton: {
+    backgroundColor: '#0a85ed',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    justifyContent:'center'
+  },
+  submitButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    
+  },
+  imagePickerContainer: {
+    borderWidth: 1,
+    borderColor: '#0a85ed',
+    borderRadius: 5,
+    paddingVertical: 20,
+    paddingHorizontal: 30,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  imagePickerText: {
+    fontSize: 16,
+    color: '#555',
   },
   profileImage: {
     width: 100,
     height: 100,
-    borderRadius: 15,
-    marginRight: 10,
-  },
-  imagePickerText: {
-    padding: 5,
-    fontSize: 16,
-    color: 'gray',
-  },
-  image: {
-    width: 100,
-    height: 100,
-    borderRadius: 15,
-    marginRight: 10,
-  },
-  pickerContainer: {
-    borderWidth: 1,
-    borderRadius: 10,
-    marginTop: 15,
-  },
-  map: {
-    flex: 1,
-    height: 300,
-    marginTop: 10,
-  },
-  button: {
-    padding: 15,
-    borderRadius: 10,
-    marginTop: 10,
-    alignItems: 'center',
-  },
-  buttonText: {
-    fontSize: 16,
-    color: 'white',
+    borderRadius: 50,
+    marginBottom: 10,
   },
 });
+
+
+
 
 
 

@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Alert, StyleSheet, Image } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
 import { getFirestore, getDocs, collection, deleteDoc, doc } from "firebase/firestore";
 import { app } from '../../firebaseConfig';
-import { Image } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useNavigation } from '@react-navigation/native';
 
@@ -45,49 +44,64 @@ export default function SkillScreen() {
 
   const renderPostItem = ({ item }) => (
     <View style={styles.postContainer}>
-      <Text style={styles.title}>Job Title: {item.title}</Text>
-      <Text style={styles.description}>Description: {item.desc}</Text>
-      <Text style={styles.phoneNumber}>Phone Number: {item.phoneNumber}</Text>
+      <View style={styles.passportHeader}>
+        <Text style={styles.title}>Job Title: {item.title}</Text>
+        <Text style={styles.description}>Description: {item.desc}</Text>
+        <Text style={styles.phoneNumber}>Phone Number: {item.phoneNumber}</Text>
+      </View>
       <FlatList
         data={item.images}
         horizontal
         renderItem={({ item }) => <Image source={{ uri: item }} style={styles.image} />}
         keyExtractor={(item, index) => index.toString()}
       />
-      <View style={{height:10}}/>
-      <MapView
-        style={styles.map}
-        provider={PROVIDER_GOOGLE}
-        initialRegion={{
-          latitude: item.selectedLocation.latitude,
-          longitude: item.selectedLocation.longitude,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
-        }}
-      >
-        <Marker
-          coordinate={{
+      {item.selectedLocation ? (
+        <MapView
+          style={styles.map}
+          provider={PROVIDER_GOOGLE}
+          initialRegion={{
             latitude: item.selectedLocation.latitude,
             longitude: item.selectedLocation.longitude,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
           }}
-        />
-      </MapView>
-      <TouchableOpacity style={styles.button} onPress={() => handleEditPost(item.id)}>
-        <Text>Edit</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={() => handleDeletePost(item.id)}>
-        <Text>Delete</Text>
-      </TouchableOpacity>
+        >
+          <Marker
+            coordinate={{
+              latitude: item.selectedLocation.latitude,
+              longitude: item.selectedLocation.longitude,
+            }}
+          />
+        </MapView>
+      ) : (
+        <Text style={styles.noLocationText}>Location data is not available for this post</Text>
+      )}
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.button} onPress={() => handleEditPost(item.id)}>
+          <Text style={{color:'white'}}>Edit</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={() => handleDeletePost(item.id)}>
+          <Text style={{color:'white'}}>Delete</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  const renderEmptyState = () => (
+    <View style={styles.emptyStateContainer}>
+      <Text style={styles.emptyStateText}>You haven't posted any skills yet. Post your skills now!</Text>
     </View>
   );
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={posts}
-        renderItem={renderPostItem}
-        keyExtractor={(item) => item.id}
-      />
+      {posts.length === 0 ? renderEmptyState() : (
+        <FlatList
+          data={posts}
+          renderItem={renderPostItem}
+          keyExtractor={(item) => item.id}
+        />
+      )}
     </View>
   );
 }
@@ -95,14 +109,22 @@ export default function SkillScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f0f0f0',
+    padding: 10,
   },
   postContainer: {
+    backgroundColor: '#fff',
     marginBottom: 20,
     padding: 15,
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 10,
+  },
+  passportHeader: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    paddingBottom: 10,
+    marginBottom: 10,
   },
   title: {
     fontSize: 18,
@@ -113,7 +135,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   phoneNumber: {
-    marginBottom: 5,
+    marginBottom: 15,
   },
   image: {
     width: 100,
@@ -125,14 +147,35 @@ const styles = StyleSheet.create({
     height: 200,
     marginBottom: 10,
   },
+  noLocationText: {
+    textAlign: 'center',
+    color: '#ff0000',
+    marginBottom: 10,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
   button: {
-    marginTop: 5,
-    backgroundColor: '#007bff',
+    flex: 1,
+    marginHorizontal: 5,
+    backgroundColor: '#0a85ed',
     padding: 10,
     borderRadius: 5,
     alignItems: 'center',
   },
+  emptyStateContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyStateText: {
+    fontSize: 16,
+    textAlign: 'center',
+  },
 });
+
+
 
 
 

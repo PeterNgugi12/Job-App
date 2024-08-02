@@ -1,9 +1,6 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity,StyleSheet} from 'react-native';
+import { View, Text, Image, TouchableOpacity,StyleSheet, ScrollView} from 'react-native';
 import { useUser,useAuth } from '@clerk/clerk-expo';
-import dairy from './../../assets/images/dairy.png';
-import search from './../../assets/images/search.jpg';
-import logout from './../../assets/images/logout.png';
 import { useNavigation } from '@react-navigation/native';
 import { AntDesign } from '@expo/vector-icons';
 
@@ -21,7 +18,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <View style={{ padding: 5 }}>
+    <ScrollView style={{ padding: 5 }}>
       <View style={{ marginTop: 35, marginLeft:20 }}>
         <Image source={{ uri: user?.imageUrl }} style={{ width: 50, height: 50, borderRadius: 25, justifyContent:'flex-start' }} />
         <Text style={{ fontWeight: 'bold', fontSize: 20, marginTop: 2 }}>{user?.fullName}</Text>
@@ -49,14 +46,7 @@ export default function ProfileScreen() {
             <Text style={{fontSize:16,fontWeight:'500',}}>Customer Care support</Text>
             <AntDesign name="right" size={20} color="black" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('report-client')} style={{marginTop:15,marginLeft:20,flexDirection:'row',justifyContent:'space-between',borderBottomWidth: 1,borderBottomColor: 'grey',paddingBottom:10}}>
-            <Text style={{fontSize:16,fontWeight:'500'}}>Report Client</Text>
-            <AntDesign name="right" size={20} color="black" />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('report-worker')} style={{marginTop:15,marginLeft:20,flexDirection:'row',justifyContent:'space-between',borderBottomWidth: 1,borderBottomColor: 'grey',paddingBottom:10}}>
-            <Text style={{fontSize:16,fontWeight:'500'}}>Report Worker</Text>
-            <AntDesign name="right" size={20} color="black" />
-          </TouchableOpacity>
+          
           <TouchableOpacity onPress={() => navigation.navigate('faq')} style={{marginTop:15,marginLeft:20,flexDirection:'row',justifyContent:'space-between'}}>
             <Text style={{fontSize:16,fontWeight:'500'}}>FAQ</Text>
             <AntDesign name="right" size={20} color="black" />
@@ -71,12 +61,13 @@ export default function ProfileScreen() {
       </View>
       <View style={{alignItems:'center',marginTop:20}}>
         <TouchableOpacity onPress={() => onWorkPress('Logout')}>
-               <Text style={{fontSize:15,backgroundColor:'blue',color:'white',borderRadius:10,width:100,textAlign:'center',padding:10}}>Sign Out</Text>
+               <Text style={{fontSize:15,backgroundColor:'#0a85ed',color:'white',borderRadius:10,width:100,textAlign:'center',padding:10}}>Sign Out</Text>
         </TouchableOpacity>
         
       </View>
       
-    </View>
+      <View style={{height:100}}/>
+    </ScrollView>
   );
 }
 const styles = StyleSheet.create({

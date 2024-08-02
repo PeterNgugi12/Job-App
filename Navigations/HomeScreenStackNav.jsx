@@ -1,4 +1,4 @@
-import { View, Text } from 'react-native'
+import { View, Text,TouchableOpacity } from 'react-native'
 import React from 'react'
 import { createStackNavigator } from '@react-navigation/stack';
 import HomeScreen from '../Apps/Screens/HomeScreen'
@@ -6,7 +6,9 @@ import JobList from '../Apps/Screens/JobList';
 import JobDetails from '../Apps/Screens/JobDetails';
 import MapScreen from '../Apps/Screens/MapScreen';
 import AddPostScreen from '../Apps/Screens/AddPostScreen';
-import EditPostScreen from '../Apps/Screens/EditPostScreen';
+
+import { Ionicons } from '@expo/vector-icons';
+import EarnScreen from '../Apps/Screens/EarnScreen';
 
 const Stack = createStackNavigator();
 export default function HomeScreenStackNav() {
@@ -38,22 +40,24 @@ export default function HomeScreenStackNav() {
         headerTitle:'Location'
     }}
      />
-    <Stack.Screen name="addpost" component={AddPostScreen} options={{
-         headerStyle:{
-            backgroundColor:'white'
+   
+   <Stack.Screen 
+    name="addpost" 
+    component={AddPostScreen} 
+    options={({ navigation }) => ({
+        headerStyle: {
+            backgroundColor: 'white'
         },
-        headerTintColor:'black', 
-        headerTitle:'Post'
-    }}
-     />
-    <Stack.Screen name="EditPost" component={EditPostScreen} options={{
-         headerStyle:{
-            backgroundColor:'white'
-        },
-        headerTintColor:'black', 
-        headerTitle:'Post'
-    }}
-     />
+        headerTintColor: 'black', 
+        headerTitle: 'Post',
+        headerLeft: () => (
+            <TouchableOpacity>
+                <Ionicons name="arrow-back" size={24} color="black" style={{ marginLeft: 15 }} />
+            </TouchableOpacity>
+        ),
+    })}
+/>
+    
   </Stack.Navigator>
   )
 }
